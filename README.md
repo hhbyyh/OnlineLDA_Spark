@@ -2,7 +2,7 @@
 Online LDA based on Spark
 
 The repository contains an implementation for online LDA from http://www.cs.princeton.edu/~mdhoffma/. 
-Developed with Apache Spark v1.2.0.
+Developed with Apache Spark v1.2.0. Share the code in case it may help.
 
 
 main interfaces:
