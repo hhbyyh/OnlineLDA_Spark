@@ -11,5 +11,10 @@ OnlineLDA_Spark runBatchMode(sc: SparkContext, paths: Seq[String], vocab: Map[St
 
 where paths are the files to be processed. For more details, refer to Driver.scala for examples.
 
+Performance statistics:
 
+On a 4-node cluster, each with 16 cores and 30G memory.
+
+1. data set from stackoverflow posts titles
+    processed 8 millions short articles in 15 minutes (with K = 10 and vocab size about 110K).
 
