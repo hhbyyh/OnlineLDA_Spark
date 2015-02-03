@@ -14,7 +14,7 @@ main interfaces:
 where paths are the files to be processed. For more details, refer to Driver.scala for examples.
 
 
-Performance statistics, On a 4-node cluster, each with 16 cores and 30G memory.
+Performance statistics, On a 4-node cluster, each with 16 cores and 30G memory. Without native BLAS installed. (for larger K, a native BLAS library will probably help)
 
 1. data set from stackoverflow posts titles
 
@@ -22,7 +22,7 @@ Performance statistics, On a 4-node cluster, each with 16 cores and 30G memory.
     
 2. full English wiki 
  
-    processed 5876K documents (avg length ~1000, 30G in total) in 2 hours and 17 minutes. 
+    processed 5876K documents (avg length ~1000 words/per doc, 30G in total) in 2 hours and 17 minutes. 
     word-topic sample:
         (album,score,music,song,band,seed,web,team,single,length)
         (align,center,style,left,small,text,width,background,class,color)
@@ -33,7 +33,4 @@ Performance statistics, On a 4-node cluster, each with 16 cores and 30G memory.
         (author,year,volume,issue,math,species,target,citations,system,publisher)
         (web,publisher,film,news,work,series,book,birth,author,language) ...
 
-    
-    
-
-
+   
