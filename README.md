@@ -23,6 +23,16 @@ Performance statistics, On a 4-node cluster, each with 16 cores and 30G memory.
 2. full English wiki 
  
     processed 5876K documents (avg length ~1000, 30G in total) in 2 hours and 17 minutes. 
+    word-topic sample:
+        (album,score,music,song,band,seed,web,team,single,length)
+        (align,center,style,left,small,text,width,background,class,color)
+        (team,football,season,player,goals,players,goal,image,time,years)
+        (year,news,publisher,years,time,books,book,state,government,work)
+        (subdivision,population,area,image,map,display,code,footnotes,region,caption)
+        (talk,span,color,font,page,style,discussion,deletion,small,made)
+        (author,year,volume,issue,math,species,target,citations,system,publisher)
+        (web,publisher,film,news,work,series,book,birth,author,language) ...
+
     
     
 
