@@ -24,6 +24,7 @@ Performance statistics, On a 4-node cluster, each with 16 cores and 30G memory. 
  
     processed 5876K documents (avg length ~1000 words/per doc, 30G in total) in 2 hours and 17 minutes. 
     word-topic sample:
+
         (album,score,music,song,band,seed,web,team,single,length)
         (align,center,style,left,small,text,width,background,class,color)
         (team,football,season,player,goals,players,goal,image,time,years)
