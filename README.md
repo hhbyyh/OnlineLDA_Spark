@@ -19,4 +19,11 @@ Performance statistics, On a 4-node cluster, each with 16 cores and 30G memory.
 1. data set from stackoverflow posts titles
 
     processed 8 millions short articles in 15 minutes (with K = 10 and vocab size about 110K).
+    
+2. full English wiki 
+ 
+    processed 5876K documents (avg length ~1000, 30G in total) in 2 hours and 17 minutes. 
+    
+    
+
 
