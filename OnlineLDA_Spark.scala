@@ -1,17 +1,18 @@
 package com.github.yuhao.yang
 
+
 import org.apache.spark.SparkContext
-import breeze.numerics._
-import breeze.linalg._
-import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.rdd.RDD
-import org.apache.spark.mllib
+
+import breeze.linalg.{DenseVector => BDV, normalize, kron, sum, axpy => brzAxpy, DenseMatrix => BDM}
+import breeze.numerics.{exp, abs, digamma}
+import breeze.stats.distributions.Gamma
+
 
 object OnlineLDA_Spark {
 
   /**
    * Online LDA can also be ran as batch LDA when submitting the corpus multiple times
-   * Note that Batch LDA is just for illustration and the performance is not optimaized. You may want to refactor the
+   * Note that Batch LDA is just for illustration and the performance is not optimized. You may want to refactor the
    * submit method to improve performance.
    * @param paths one doc per line
    */
@@ -50,58 +51,58 @@ object OnlineLDA_Spark {
 
 class OnlineLDA_Spark(
     vocab: Map[String, Int], // vocabulary size
-    _K: Int, // topic number
-     D: Int, // corpus size
-    alpha: Double, // Hyperparameter for prior on weight vectors theta
-    eta: Double, // Hyperparameter for prior on topics beta
-    tau0: Double, // downweights early iterations
-    kappa: Double // how quickly old infomation is forgotten
+    _K: Int,        // topic number
+     D: Int,        // corpus size
+    alpha: Double,  // Hyperparameter for prior on weight vectors theta
+    eta: Double,    // Hyperparameter for prior on topics beta
+    tau0: Double,   // downweights early iterations
+    kappa: Double   // how quickly old infomation is forgotten
     ) extends Serializable {
 
   private var _updatect = 0
   private val _W = vocab.size
 
   // Initialize the variational distribution q(beta|lambda)
-  var _lambda = BLAS.getGammaMatrix(100.0, 1.0 / 100.0, _K, _W)   // K * V
-  private var _Elogbeta = BLAS.dirichlet_expectation(_lambda)             // K * V
+  var _lambda = getGammaMatrix(_K, _W)   // K * V
+  private var _Elogbeta = dirichlet_expectation(_lambda)             // K * V
   private var _expElogbeta = exp(_Elogbeta)                               // K * V
 
   private def submit(sc: SparkContext, docPaths: Seq[String]): Unit = {
     // rhot will be between 0 and 1, and says how much to weight the information we got from this mini-batch.
-    val rhot = pow(tau0 + _updatect, -kappa)
+    val rhot = math.pow(tau0 + _updatect, -kappa)
 
     val docsRdd = sc.parallelize(docPaths, 4)
-    var stat = DenseMatrix.zeros[Double](_K, _W)
+    var stat = BDM.zeros[Double](_K, _W)
     stat = docsRdd.aggregate(stat)(seqOp, _ += _)
 
     stat = stat :* _expElogbeta
     _lambda = _lambda * (1 - rhot) + (stat * D.toDouble / docPaths.size.toDouble + eta) * rhot
-    _Elogbeta = BLAS.dirichlet_expectation(_lambda)
+    _Elogbeta = dirichlet_expectation(_lambda)
     _expElogbeta = exp(_Elogbeta)
     _updatect += 1
 
   }
 
-  private def seqOp(other: DenseMatrix[Double], path: String): DenseMatrix[Double] = {
+  private def seqOp(other: BDM[Double], path: String): BDM[Double] = {
     val docs = scala.io.Source.fromFile(path).getLines()
     docs.foreach(doc => {
       val docVector = Docs2Vec.String2Vec(doc, vocab)
-      val (ids, cts) = (docVector.indices.toList, docVector.values.toList)
+      val (ids, cts) = (docVector.indices.toList, docVector.values)
 
-      var gammad = BLAS.getGammaVector(100, 1.0 / 100.0, _K) // 1 * K
-      var Elogthetad = BLAS.vector_dirichlet_expectation(gammad.t).t // 1 * K
+      var gammad = new Gamma(100, 1.0 / 100.0).samplesVector(_K).t   // 1 * K
+      var Elogthetad = vector_dirichlet_expectation(gammad.t).t // 1 * K
       var expElogthetad = exp(Elogthetad.t).t // 1 * K
       val expElogbetad = _expElogbeta(::, ids).toDenseMatrix // K * ids
 
       var phinorm = expElogthetad * expElogbetad + 1e-100 // 1 * ids
       var meanchange = 1D
-      val ctsVector = new DenseVector[Double](cts.toArray).t // 1 * ids
+      val ctsVector = new BDV[Double](cts).t // 1 * ids
 
       while (meanchange > 1e-6) {
         val lastgamma = gammad
         //        1*K                  1 * ids               ids * k
         gammad = (expElogthetad :* ((ctsVector / phinorm) * (expElogbetad.t))) + alpha
-        Elogthetad = BLAS.vector_dirichlet_expectation(gammad.t).t
+        Elogthetad = vector_dirichlet_expectation(gammad.t).t
         expElogthetad = exp(Elogthetad.t).t
         phinorm = expElogthetad * expElogbetad + 1e-100
         meanchange = sum(abs((gammad - lastgamma).t)) / gammad.t.size.toDouble
@@ -116,6 +117,26 @@ class OnlineLDA_Spark(
     })
     other
   }
+
+
+  def getGammaMatrix(row:Int, col:Int): BDM[Double] ={
+      val gammaRandomGenerator = new Gamma(100, 1.0 / 100.0)
+    val temp = gammaRandomGenerator.sample(row * col).toArray
+    (new BDM[Double](row, col, temp))
+  }
+
+  def dirichlet_expectation(alpha : BDM[Double]): BDM[Double] = {
+    val rowSum =  sum(alpha(breeze.linalg.*, ::))
+    val digAlpha = digamma(alpha)
+    val digRowSum = digamma(rowSum)
+    val result = digAlpha(::, breeze.linalg.*) - digRowSum
+    result
+  }
+
+  def vector_dirichlet_expectation(v : BDV[Double]): (BDV[Double]) ={
+    digamma(v) - digamma(sum(v))
+  }
+
 }
 
 

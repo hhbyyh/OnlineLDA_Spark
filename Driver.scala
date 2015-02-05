@@ -11,7 +11,7 @@ object Driver extends Serializable{
     Logger.getLogger("org").setLevel(Level.ERROR)
     Logger.getLogger("akka").setLevel(Level.ERROR)
     val inputDir = args(0)
-    val filePaths = extractPaths(inputDir + "titles", true)
+    val filePaths = extractPaths(inputDir + "texts", true)
     val stopWordsPath = inputDir + "stop.txt"
     val vocabPath = inputDir + "wordsEn.txt"
 
